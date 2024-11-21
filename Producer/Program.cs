@@ -8,7 +8,7 @@ class Program
     {
         var config = new ProducerConfig
         {
-            BootstrapServers = "localhost:29092"
+            BootstrapServers = "localhost:49092"
         };
 
         using var producer = new ProducerBuilder<Null, string>(config).Build();
