@@ -5,58 +5,12 @@ Parameters:
     Type: String
     Description: "The name of the S3 bucket where Lambda code and layers are stored"
     Default: mskbckt254
-  TopicNmae:
+  TopicName:
     Type: String
-    Description: "The poc that consumer and producer lambda will use to communicate"
+    Description: "The topic that consumer and producer lambda will use to communicate"
     Default: test-topic
 
 Resources:
-  MSKAccessRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service: "lambda.amazonaws.com"  
-            Action: "sts:AssumeRole"
-      Policies:
-        - PolicyName: "AllowMSKAccess"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - "kafka-cluster:Connect"
-                  - "kafka-cluster:DescribeCluster"
-                  - "kafka-cluster:DescribeTopic"
-                  - "kafka-cluster:WriteData"
-                  - "kafka-cluster:ReadData"
-                Resource:
-                  - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:cluster/${MSKServerlessCluster}"
-                  - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:topic/${MSKServerlessCluster}/*"
-
-  MSKAccessPolicy:
-    Type: 'AWS::IAM::Policy'
-    Properties:
-      PolicyName: "MSKAccessPolicy"
-      Roles:
-        - !Ref MSKAccessRole
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Action:
-              - "kafka-cluster:Connect"
-              - "kafka-cluster:DescribeCluster"
-              - "kafka-cluster:DescribeTopic"
-              - "kafka-cluster:WriteData"
-              - "kafka-cluster:ReadData"
-            Resource:
-              - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:cluster/${MSKServerlessCluster}"
-              - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:topic/${MSKServerlessCluster}/*"
-
   LambdaExecutionRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -77,59 +31,68 @@ Resources:
                   - "kafka-cluster:Connect"
                   - "kafka-cluster:ReadData"
                   - "kafka-cluster:WriteData"
+                  - "kafka-cluster:DescribeCluster"
+                  - "kafka-cluster:DescribeTopic"
                 Resource:
                   - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:cluster/${MSKServerlessCluster}"
                   - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:topic/${MSKServerlessCluster}/*"
-  KafkaPythonLayer:
-    Type: 'AWS::Lambda::LayerVersion'
-    Properties:
-      LayerName: 'kafka-python-layer'
-      Description: 'A layer for kafka-python dependency'
-      Content:
-        S3Bucket: !Ref BucketName
-        S3Key: 'layers/kafka-python-layer.zip' 
-      CompatibleRuntimes:
-        - python3.8
-        - python3.9
-        - python3.10
+
+              - Effect: "Allow"
+                Action:
+                  - "s3:GetObject"
+                Resource: !Sub "arn:aws:s3:::${BucketName}/*"
+  # KafkaPythonLayer:
+  #   Type: 'AWS::Lambda::LayerVersion'
+  #   Properties:
+  #     LayerName: 'kafka-python-layer'
+  #     Description: 'A layer for kafka-python dependency'
+  #     Content:
+  #       S3Bucket: !Ref BucketName
+  #       S3Key: 'layers/kafka-python-layer.zip'
+  #     CompatibleRuntimes:
+  #       - python3.8
+  #       - python3.9
+  #       - python3.10
+
   MSKConsumerLambdaFunction:
-  Type: 'AWS::Lambda::Function'
-  Properties:
-    FunctionName: "MSKConsumerLambda"
-    Handler: "consumer.handler"
-    Role: !GetAtt LambdaExecutionRole.Arn
-    Code:
-      S3Bucket: !Ref BucketName 
-      S3Key: 'aws/consumer.zip'
-    Runtime: "python3.8"
-    Timeout: 300
-    Environment:
-      Variables:
-        MSK_CLUSTER_ARN: !GetAtt MSKServerlessCluster.Arn
-        MSK_TOPIC: !Ref TopicNmae
-    Layers:
-      - !Ref KafkaPythonLayer
-    Architectures:
-      - x86_64 
-MSKProducerLambdaFunction:
-  Type: 'AWS::Lambda::Function'
-  Properties:
-    FunctionName: "MSKProducerLambda"
-    Handler: "producer.handler"
-    Role: !GetAtt LambdaExecutionRole.Arn
-    Code:
-      S3Bucket: !Ref BucketName 
-      S3Key: 'aws/producer.zip'
-    Runtime: "python3.8"
-    Timeout: 300
-    Environment:
-      Variables:
-        MSK_CLUSTER_ARN: !GetAtt MSKServerlessCluster.Arn
-        MSK_TOPIC: !Ref TopicNmae
-    Layers:
-      - !Ref KafkaPythonLayer
-    Architectures:
-      - x86_64 
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: "MSKConsumerLambda"
+      Handler: "consumer.handler"
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref BucketName
+        S3Key: 'aws/consumer.zip'
+      Runtime: "python3.8"
+      Timeout: 300
+      Environment:
+        Variables:
+          MSK_CLUSTER_ARN: !GetAtt MSKServerlessCluster.Arn
+          MSK_TOPIC: !Ref TopicName
+      # Layers:
+      #   - !Ref KafkaPythonLayer
+      Architectures:
+        - x86_64
+
+  MSKProducerLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: "MSKProducerLambda"
+      Handler: "producer.handler"
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref BucketName
+        S3Key: 'aws/producer.zip'
+      Runtime: "python3.8"
+      Timeout: 300
+      Environment:
+        Variables:
+          MSK_CLUSTER_ARN: !GetAtt MSKServerlessCluster.Arn
+          MSK_TOPIC: !Ref TopicName
+      # Layers:
+      #   - !Ref KafkaPythonLayer
+      Architectures:
+        - x86_64
 
   MSKConsumerEventSourceMapping:
     Type: 'AWS::Lambda::EventSourceMapping'
@@ -180,7 +143,7 @@ MSKProducerLambdaFunction:
         - IpProtocol: tcp
           FromPort: 9092
           ToPort: 9092
-          CidrIp: 0.0.0.0/0 # For testing only
+          CidrIp: 0.0.0.0/0  # For testing only
       SecurityGroupEgress:
         - IpProtocol: -1
           FromPort: -1
@@ -204,8 +167,6 @@ MSKProducerLambdaFunction:
             - !Ref MSKSubnet2
           SecurityGroups:
             - !Ref MSKSecurityGroup
-
-
 Outputs:
   VpcId:
     Description: "MSK VPC ID"
@@ -227,9 +188,7 @@ Outputs:
     Description: "ARN of the MSK Serverless Cluster"
     Value: !GetAtt MSKServerlessCluster.Arn
 
-  MSKAccessRoleArn:
-    Description: "ARN of the IAM Role for MSK Access"
-    Value: !GetAtt MSKAccessRole.Arn
+
 
   MSKConsumerLambdaFunctionArn:
     Description: "ARN of the Consumer Lambda Function"

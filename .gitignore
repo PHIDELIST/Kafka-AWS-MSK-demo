@@ -2,3 +2,4 @@
 */obj
 aws/lambda/python
 *.zip
+aws/lambda/*/kafka*/
