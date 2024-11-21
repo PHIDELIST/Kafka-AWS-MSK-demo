@@ -1,2 +1,4 @@
 */bin
 */obj
+aws/lambda/python
+*.zip
