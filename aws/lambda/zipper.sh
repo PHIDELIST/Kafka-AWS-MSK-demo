@@ -11,11 +11,11 @@ pip install kafka-python -t "$WORK_DIR/aws/lambda/producer"
 
 echo "Zipping Consumer Lambda..."
 cd "$WORK_DIR/aws/lambda/consumer"
-zip -r "$WORK_DIR/aws/lambda/consumer/consumer.zip" "$WORK_DIR/aws/lambda/consumer/consumer.py" kafka/
+zip -r consumer.zip consumer.py kafka/
 
 echo "Zipping Producer Lambda..."
 cd "$WORK_DIR/aws/lambda/producer"
-zip -r "$WORK_DIR/aws/lambda/producer/producer.zip" "$WORK_DIR/aws/lambda/producer/producer.py" kafka/
+zip -r producer.zip producer.py kafka/
 
 echo "All zip files have been created:"
 echo "1. consumer.zip"

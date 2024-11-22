@@ -5,7 +5,7 @@ from kafka import KafkaConsumer
 def handler(event, context):
     consumer = KafkaConsumer(
         'test-topic',  
-        broker_url = os.getenv('MSK_BROKER_URL'), 
+        bootstrap_servers = os.getenv('MSK_BROKER_URL'), 
         group_id='consumer-group', 
         enable_auto_commit=True,
         value_deserializer=lambda x: json.loads(x.decode('utf-8'))
