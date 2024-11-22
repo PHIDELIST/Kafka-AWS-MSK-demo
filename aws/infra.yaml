@@ -28,14 +28,18 @@ Resources:
             Statement:
               - Effect: "Allow"
                 Action:
-                  - "kafka-cluster:Connect"
-                  - "kafka-cluster:ReadData"
-                  - "kafka-cluster:WriteData"
-                  - "kafka-cluster:DescribeCluster"
-                  - "kafka-cluster:DescribeTopic"
+                  - "kafka:Connect"
+                  - "kafka:ReadData"
+                  - "kafka:WriteData"
+                  - "kafka:DescribeCluster"
+                  - "kafka:DescribeTopic"
+                  - "kafka:DescribeClusterV2"
+                  - "kafka:GetBootstrapBrokers"
+                  - "kafka:DescribeClusterDynamicConfiguration"
                 Resource:
-                  - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:cluster/${MSKServerlessCluster}"
-                  - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:topic/${MSKServerlessCluster}/*"
+                  - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:cluster/*"
+                  - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:topic/ServerlessMSKCluster/*"
+                  - !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:group/ServerlessMSKCluster/*"
 
               - Effect: "Allow"
                 Action:
@@ -69,6 +73,7 @@ Resources:
         Variables:
           MSK_CLUSTER_ARN: !GetAtt MSKServerlessCluster.Arn
           MSK_TOPIC: !Ref TopicName
+          MSK_BROKER_URL: "url"
       # Layers:
       #   - !Ref KafkaPythonLayer
       Architectures:
@@ -89,6 +94,7 @@ Resources:
         Variables:
           MSK_CLUSTER_ARN: !GetAtt MSKServerlessCluster.Arn
           MSK_TOPIC: !Ref TopicName
+          MSK_BROKER_URL: "url"
       # Layers:
       #   - !Ref KafkaPythonLayer
       Architectures:
@@ -98,7 +104,10 @@ Resources:
     Type: 'AWS::Lambda::EventSourceMapping'
     Properties:
       BatchSize: 100
-      EventSourceArn: !Sub "arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:cluster/${MSKServerlessCluster}"
+      Topics:
+        - !Ref TopicName
+      EventSourceArn: !GetAtt MSKServerlessCluster.Arn
+      Enabled: true
       FunctionName: !Ref MSKConsumerLambdaFunction
       StartingPosition: "TRIM_HORIZON"
 

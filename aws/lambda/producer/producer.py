@@ -1,9 +1,10 @@
 import json
+import os
 from kafka import KafkaProducer
 
 def handler(event, context):
     producer = KafkaProducer(
-        bootstrap_servers=['<MSK-BROKER-URL>'], 
+        broker_url = os.getenv('MSK_BROKER_URL'), 
         value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
 

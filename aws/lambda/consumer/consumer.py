@@ -1,10 +1,11 @@
 import json
+import os
 from kafka import KafkaConsumer
 
 def handler(event, context):
     consumer = KafkaConsumer(
         'test-topic',  
-        bootstrap_servers=['<MSK-BROKER-URL>'], 
+        broker_url = os.getenv('MSK_BROKER_URL'), 
         group_id='consumer-group', 
         enable_auto_commit=True,
         value_deserializer=lambda x: json.loads(x.decode('utf-8'))
