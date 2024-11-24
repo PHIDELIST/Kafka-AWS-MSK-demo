@@ -1,5 +1,5 @@
-*/bin
-*/obj
+local/*/bin
+local/*/obj
 aws/lambda/python
 *.zip
 aws/lambda/*/kafka*/
